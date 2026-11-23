@@ -4,15 +4,21 @@ version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.163.1",
+    "psycopg2[binary]>=2.9.13",
     "psycopg[binary]>=3.3.9",
+    "pwdlib[argon2]>=0.4.2",
     "pydantic-settings>=2.16.3",
+    "pydantic[email]>=2.14.3",
+    "pyjwt>=2.15.1",
     "python-dotenv>=1.2.4",
+    "razorpay>=2.0.1",
     "sqlalchemy>=2.1.9",
     "uvicorn[standard]>=0.54.0",
 ]
 
 [dependency-groups]
 dev = [
+    "alembic>=1.20.1",
     "httpx2>=2.16.2",
     "pytest>=9.2.0",
 ]

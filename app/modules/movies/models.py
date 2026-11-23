@@ -1,7 +1,7 @@
 from app.database.base import Base
 import uuid
-from datetime import date
-from sqlalchemy import Uuid,String,Date,Text,Integer,CheckConstraint,Enum
+from datetime import date,datetime
+from sqlalchemy import Uuid,String,Date,Text,Integer,CheckConstraint,Enum,DateTime,func
 from sqlalchemy.orm import Mapped,mapped_column
 import enum
 
@@ -69,7 +69,7 @@ class Movie(Base):
         nullable=True
     )
 
-    status: Mapped[MovieStatus | None] = mapped_column(
+    status: Mapped[MovieStatus] = mapped_column(
         Enum(
             MovieStatus,
             name="movie_status",
@@ -77,4 +77,17 @@ class Movie(Base):
         ),
         nullable=False,
         default=MovieStatus.DRAFT
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now()
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now()
     )
