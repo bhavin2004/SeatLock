@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     RAZORPAY_KEY_SECRET: SecretStr | None = None
     RAZORPAY_WEBHOOK_SECRET: SecretStr | None = None
     TEST_DATABASE_URL: SecretStr | None = None
+    REDIS_URL: SecretStr | None = None
 
     
     @model_validator(mode="after")

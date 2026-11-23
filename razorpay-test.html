@@ -14,8 +14,8 @@
   <script>
     document.getElementById("pay").addEventListener("click", () => {
       const checkout = new Razorpay({
-        key: "REPLACE_WITH_TEST_KEY_ID",
-        order_id: "REPLACE_WITH_PROVIDER_ORDER_ID",
+        key: "rzp_test_U3FtAWSPax41DU",
+        order_id: "order_U3W8ia5QHObUVU",
         name: "CineBook",
         handler: async (result) => {
           const verificationBody = {
@@ -33,7 +33,7 @@
 
           try {
             const response = await fetch(
-              "/api/v1/bookings/BOOKING_UUID/payments/PAYMENT_UUID/verify",
+              "/api/v1/bookings/43ea71e0-d0c4-4221-947b-4f3e83e28179/payments/d4386650-b424-4fac-8f3b-44ac48eedb0d/verify",
               {
                 method: "POST",
                 headers: {
