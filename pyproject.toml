@@ -3,6 +3,7 @@ name = "cinebook"
 version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = [
+    "alembic>=1.20.1",
     "celery[redis]>=5.7.0",
     "fastapi>=0.163.1",
     "psycopg2-binary>=2.9.13",
@@ -20,7 +21,6 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "alembic>=1.20.1",
     "httpx2>=2.16.2",
     "pytest>=9.2.0",
 ]

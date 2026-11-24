@@ -1,0 +1,96 @@
+x-celery: &celery
+  build:
+    context: .
+    dockerfile: Dockerfile.worker
+  env_file: .env
+  environment:
+    DATABASE_URL: postgresql+psycopg2://cinebook:cinebook-local@postgres:5432/cinebook
+    REDIS_URL: redis://redis:6379/0
+    CELERY_BROKER_URL: redis://redis:6379/1
+  depends_on:
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: cinebook
+      POSTGRES_PASSWORD: cinebook-local
+      POSTGRES_DB: cinebook
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "cinebook", "-d", "cinebook"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  worker:
+    <<: *celery
+
+  beat:
+    <<: *celery
+    command:
+      - /app/.venv/bin/celery
+      - -A
+      - app.core.celery_app:celery_app
+      - beat
+      - --loglevel=INFO
+      - --schedule=/tmp/celerybeat-schedule
+
+  api:
+    <<: *celery
+    command:
+      - /app/.venv/bin/python
+      - -m
+      - uvicorn
+      - app.main:app
+      - --host
+      - "0.0.0.0"
+      - --port
+      - "8000"
+    ports:
+      - "127.0.0.1:8001:8000"
+    
+    
+    volumes:
+      - ./razorpay-test.html:/app/razorpay-test.html:ro
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:?Set RAZORPAY_KEY_ID in the root .env}
+    ports:
+      - "127.0.0.1:8080:80"
+    depends_on:
+      - api
+  migrate:
+    <<: *celery
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command:
+      - /app/.venv/bin/python
+      - -m
+      - alembic
+      - upgrade
+      - head
+volumes:
+  postgres_data:

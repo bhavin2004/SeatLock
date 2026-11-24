@@ -1,0 +1,10 @@
+**
+!alembic.ini
+!migration/
+!migration/**
+!Dockerfile.worker
+!pyproject.toml
+!uv.lock
+!app/
+!app/**
+**/__pycache__

@@ -1,0 +1,22 @@
+:root {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  color: #f8f3e9;
+  background: #111825;
+  color-scheme: dark;
+  font-synthesis: none;
+  line-height: 1.5;
+  --ink: #f8f3e9;
+  --muted: #b2bbcb;
+  --surface: #1a2434;
+  --line: #354258;
+  --amber: #f3c477;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; }
+h1, h2, h3, p { margin: 0; }
+button, input { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; }
+button:disabled { cursor: default; }
+:focus-visible { outline: 3px solid #92bcff; outline-offset: 4px; }

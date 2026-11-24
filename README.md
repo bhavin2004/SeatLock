@@ -134,15 +134,14 @@ To demo failure and retry, start with a fresh hold and order. In Test Mode Netba
 
 ## Redis login rate limiting
 
-Start Redis with Docker Desktop and confirm it responds:
+With Docker Desktop running, start only Redis and confirm it responds:
 
 ```powershell
-docker network create cinebook-net
-docker run -d --name cinebook-redis --network cinebook-net -p 127.0.0.1:6379:6379 redis:7-alpine
-docker exec cinebook-redis redis-cli PING
+docker compose up -d redis
+docker compose exec redis redis-cli PING
 ```
 
-If the Redis container already exists, start it with `docker start cinebook-redis` and make sure it is connected to `cinebook-net`.
+If you previously started the demo containers manually, stop them with `docker stop cinebook-beat cinebook-worker cinebook-redis` before switching to Compose. This frees port 6379 and avoids running two schedulers.
 
 Add `REDIS_URL=redis://127.0.0.1:6379/0` to your local `.env`, then restart the API. Each IP gets five login requests per 60-second window. Each normalized email gets ten requests that pass the IP check in its own 60-second window. A blocked request receives `429 Too Many Requests` and a `Retry-After` header. The email counter follows the account identifier across IP changes.
 
@@ -150,29 +149,21 @@ To demo the IP limit, send six login requests with invalid credentials from a fr
 
 ## Celery payment reconciliation demo
 
-Set `CELERY_BROKER_URL=redis://127.0.0.1:6379/1` in your local `.env`. Use a development database and the same Razorpay Test Mode keys as the API. Build and start the worker and a single Beat scheduler from the project root:
+Set `CELERY_BROKER_URL=redis://127.0.0.1:6379/1` in your local `.env` for commands you run from Windows. Use a development database and the same Razorpay Test Mode keys as the API. Start Redis, the worker, and a single Beat scheduler from the project root:
 
 ```powershell
-docker build -f Dockerfile.worker -t cinebook-worker .
-
-docker run -d --rm --name cinebook-worker --network cinebook-net `
-  --env-file .env `
-  -e "CELERY_BROKER_URL=redis://cinebook-redis:6379/1" cinebook-worker
-
-docker run -d --rm --name cinebook-beat --network cinebook-net `
-  --env-file .env `
-  -e "CELERY_BROKER_URL=redis://cinebook-redis:6379/1" cinebook-worker `
-  /app/.venv/bin/celery -A app.core.celery_app:celery_app beat `
-  --loglevel=INFO --schedule=/tmp/celerybeat-schedule
+docker compose up --build -d
+docker compose ps
+docker compose logs --tail 30 beat worker
 ```
 
 Beat sends a scan task every 60 seconds. The worker reads pending orders in batches and queues a reconciliation task for each order. Each task looks for a matching captured payment in Razorpay and uses the existing payment completion flow.
 
 1. Create a fresh seat hold and Razorpay test order using the checkout demo above.
 2. Complete the test payment, then cancel the CineBook token prompt so the browser skips verification. Use a local setup where the Razorpay webhook cannot reach CineBook so Beat is the only confirmation path.
-3. Check `docker logs --tail 30 cinebook-worker` after the next scan. While the hold is active, expect `completed`, then confirm the booking is `confirmed` and the payment is `completed` using the GET endpoints in the checkout demo. If the hold has expired by the time the worker processes the capture, expect `review_required` and no new booking confirmation. `no_capture` means the worker did not find a matching captured payment.
+3. Check `docker compose logs --tail 30 worker` after the next scan. While the hold is active, expect `completed`, then confirm the booking is `confirmed` and the payment is `completed` using the GET endpoints in the checkout demo. If the hold has expired by the time the worker processes the capture, expect `review_required` and no new booking confirmation. `no_capture` means the worker did not find a matching captured payment.
 
-Stop scheduled scans when the demo is finished with `docker stop cinebook-beat cinebook-worker`.
+Stop scheduled scans when the demo is finished with `docker compose stop beat worker`. Redis stays up for the API's login rate limiter.
 
 ## Project status
 
