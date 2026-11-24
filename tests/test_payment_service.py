@@ -443,3 +443,60 @@ def test_complete_payment_marks_second_attempt_for_review(
     assert result == PaymentStatusEnum.REVIEW_REQUIRED
     fake_db.commit.assert_called_once()
     fake_db.rollback.assert_not_called()
+
+
+def test_complete_payment_marks_second_attempt_for_review(
+    monkeypatch,
+):
+    fake_db = MagicMock()
+    fake_booking = MagicMock()
+    fake_booking.id = uuid4()
+    fake_booking.show_id = uuid4()
+    fake_booking.status = BookingStatusEnum.CONFIRMED
+    fake_booking.expires_at = datetime.now(timezone.utc) + timedelta(minutes=10)
+
+    fake_payment = MagicMock()
+    fake_payment.payment_status = PaymentStatusEnum.PENDING
+    fake_payment.booking_id = fake_booking.id
+
+    monkeypatch.setattr(
+        payment_service.payment_repository,
+        "get_payment_by_id",
+        MagicMock(return_value=fake_payment),
+    )
+
+    monkeypatch.setattr(
+        payment_service.booking_repository,
+        "get_booking_for_user_for_update",
+        MagicMock(return_value=fake_booking),
+    )
+
+    monkeypatch.setattr(
+        payment_service.booking_repository,
+        "get_booking_for_user",
+        MagicMock(return_value=fake_booking),
+    )
+
+    monkeypatch.setattr(
+        payment_service.show_repository,
+        "get_by_id_for_update",
+        MagicMock(),
+    )
+
+    monkeypatch.setattr(
+        payment_service.payment_repository,
+        "get_payment_by_id_for_update",
+        MagicMock(return_value=fake_payment),
+    )
+
+    result = payment_service.complete_payment(
+        db=fake_db,
+        payment_id=uuid4(),
+        user_id=uuid4(),
+    )    
+
+    assert fake_payment.payment_status == PaymentStatusEnum.REVIEW_REQUIRED
+    assert fake_booking.status == BookingStatusEnum.CONFIRMED
+    assert result == PaymentStatusEnum.REVIEW_REQUIRED
+    fake_db.commit.assert_called_once()
+    fake_db.rollback.assert_not_called()

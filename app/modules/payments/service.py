@@ -231,7 +231,7 @@ def complete_payment_from_webhook(
         amount_minor: int,
         currency: str,
         payment_status: str,
-) -> None:
+) -> PaymentStatusEnum | None:
     payment = payment_repository.get_payment_by_provider_order_id(db, provider_order_id=provider_order_id)
     if payment is None:
         return
@@ -254,11 +254,12 @@ def complete_payment_from_webhook(
             detail="Booking not found"
         )
 
-    complete_payment(
+    return complete_payment(
         db,
         payment_id=payment.id,
         user_id=booking.user_id
     )
+    
 
 
      

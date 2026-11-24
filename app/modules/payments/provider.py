@@ -56,3 +56,8 @@ def verify_webhook_signature(*, raw_body: bytes, signature: str) -> bool:
     ).hexdigest()
 
     return hmac.compare_digest(expected, signature)
+
+def list_order_payments(*, provider_order_id: str) -> list[dict]:
+    client = _get_razorpay_client()
+    payments = client.order.payments(provider_order_id)
+    return payments["items"]

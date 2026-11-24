@@ -1,8 +1,9 @@
 
 
+from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select,tuple_
 from sqlalchemy.orm import Session
 
 from app.modules.payments.models import Payment, PaymentStatusEnum
@@ -33,3 +34,17 @@ def get_payment_by_provider_order_id(
 ) -> Payment | None:
     stmt = select(Payment).where(Payment.provider_order_id == provider_order_id)
     return db.scalar(stmt)
+
+def list_pending_provider_order_ids(db: Session, *, limit: int = 50, after: tuple[datetime, UUID] | None = None) -> list[tuple[datetime, UUID, str]]:
+    stmt = select(Payment.created_at, Payment.id, Payment.provider_order_id ).where(
+        Payment.payment_status == PaymentStatusEnum.PENDING,
+        Payment.provider_order_id.isnot(None),
+    )
+    if after is not None:
+        stmt = stmt.where(tuple_(Payment.created_at, Payment.id) > after)
+    stmt = stmt.order_by(Payment.created_at.asc(),Payment.id.asc()).limit(limit)
+    return [
+        (created_at, payment_id, order_id)
+        for created_at, payment_id, order_id in db.execute(stmt)
+        if order_id is not None
+    ]

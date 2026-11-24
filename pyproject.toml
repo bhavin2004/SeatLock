@@ -3,8 +3,9 @@ name = "cinebook"
 version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = [
+    "celery[redis]>=5.7.0",
     "fastapi>=0.163.1",
-    "psycopg2[binary]>=2.9.13",
+    "psycopg2-binary>=2.9.13",
     "psycopg[binary]>=3.3.9",
     "pwdlib[argon2]>=0.4.2",
     "pydantic-settings>=2.16.3",
